@@ -1,48 +1,48 @@
-import sparql
-import examples
+import csv
+
 import time
 import numpy as np
 from scipy import spatial
 from gensim.models import Word2Vec
-from gensim.models.word2vec import LineSentence
-from os.path import join, dirname
 from dbpedia import get_related_entities, DBPEDIA_PREFIX
 
 
+def write_csv(relations_statistics, csv_path):
+    with open(csv_path, 'wb') as f:
+        writer = csv.writer(f, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        header = ['Relation', 'Count', 'Average cosine sim.', 'Std. Dev. cosine sim.']
+        writer.writerow(header)
+        for (relation, count, avg_cos, std_cos) in relations_statistics:
+            writer.writerow((relation, count, avg_cos, std_cos))
 
 def main():
     # examples.word2vec_example()
     # examples.sparql_example()
-    print 'Loading model...'
+
     model_path = '../data/dbpedia_noCats_model_sg_400.bin'  # '../data/dbpedia_Cats_model_sg_400.bin'
-    n_entities = 100
+    n_entities = 10
+    out_path = '../data/word2sem.csv'
 
-    #
-    # print 'Entities:', len(model.vocab.keys())
-    #
 
-    # for word in model.vocab.keys()[:3]:
-    #     print 'Finding relations for word', word
-    #     for (relation, related_entity) in get_related_entities(word):
-    #         if related_entity in model.vocab.keys():
-    #             print model.vocab[related_entity]
-
-    # vector_entities = []
+    print 'Loading model...'
     model = Word2Vec.load_word2vec_format(model_path, binary=True)
 
     start_time = time.time()
 
     relation_vectors = dict()
-    for base_entity in model.vocab.keys()[:n_entities]:
-        print base_entity
+    if n_entities > 0:
+        relations = model.vocab.keys()[:n_entities]
+    else:
+        relations = model.vocab.keys()
+
+    for i, base_entity in enumerate(relations):
+        print i, base_entity
         for (relation, related_entity) in get_related_entities(base_entity):
             try:
                 if str(related_entity).encode('utf-8').startswith(DBPEDIA_PREFIX):
                     related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
                     if related_entity_without_prefix in model:
-                        # vector_entities.append(related_entity_without_prefix)
-
-                        v1, v2 = model[base_entity], model[related_entity_without_prefix]
+                         v1, v2 = model[base_entity], model[related_entity_without_prefix]
                         if relation in relation_vectors:
                             relation_vectors[relation].append(v2 - v1)
                         else:
@@ -68,7 +68,8 @@ def main():
             relations_statistics.append((relation, count, avg_cos, std_cos))
 
     relations_statistics.sort(key=lambda x: x[2], reverse=True)
-    print relations_statistics
+    write_csv(relations_statistics, out_path)
+    #print relations_statistics
     print '{0:.2f}'.format(time.time() - start_time), 'seconds'
 
 if __name__ == '__main__':
