@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import csv
 
 import time
@@ -19,10 +22,10 @@ def main():
     # examples.word2vec_example()
     # examples.sparql_example()
 
-    model_path = '../data/dbpedia_noCats_model_sg_400.bin'  # '../data/dbpedia_Cats_model_sg_400.bin'
-    n_entities = 10
-    out_path = '../data/word2sem.csv'
-
+    model_path = '../data/WikiEntityModel_400_neg10_iter5.seq'
+    #'../data/dbpedia_noCats_model_sg_400.bin'  # '../data/dbpedia_Cats_model_sg_400.bin'
+    n_entities = 100
+    out_path = '../data/word2sem_.csv'
 
     print 'Loading model...'
     model = Word2Vec.load_word2vec_format(model_path, binary=True)
@@ -38,20 +41,15 @@ def main():
     for i, base_entity in enumerate(relations):
         print i, base_entity
         for (relation, related_entity) in get_related_entities(base_entity):
-            try:
-                if str(related_entity).encode('utf-8').startswith(DBPEDIA_PREFIX):
-                    related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
-                    if related_entity_without_prefix in model:
-                        v1, v2 = model[base_entity], model[related_entity_without_prefix]
-                        if relation in relation_vectors:
-                            relation_vectors[relation].append(v2 - v1)
-                        else:
-                            relation_vectors[relation] = [v2 - v1]
-
-            except UnicodeEncodeError:
-                # TODO handle non unicode characters
-                # print 'unicode encoding error with entity', related_entity
-                continue
+            related_entity = unicode(related_entity).encode('utf8')
+            if related_entity.startswith(DBPEDIA_PREFIX):
+                related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
+                if related_entity_without_prefix in model:
+                    v1, v2 = model[base_entity], model[related_entity_without_prefix]
+                    if relation in relation_vectors:
+                        relation_vectors[relation].append(v2 - v1)
+                    else:
+                        relation_vectors[relation] = [v2 - v1]
 
     # print vector_entities
     relations_statistics = []
