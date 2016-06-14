@@ -42,7 +42,7 @@ def main():
                 if str(related_entity).encode('utf-8').startswith(DBPEDIA_PREFIX):
                     related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
                     if related_entity_without_prefix in model:
-                         v1, v2 = model[base_entity], model[related_entity_without_prefix]
+                        v1, v2 = model[base_entity], model[related_entity_without_prefix]
                         if relation in relation_vectors:
                             relation_vectors[relation].append(v2 - v1)
                         else:
