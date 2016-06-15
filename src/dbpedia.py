@@ -8,10 +8,14 @@ DBPEDIA_PREFIX = 'http://dbpedia.org/resource/'
 
 
 def get_related_entities(base_entity):
-
-    query = ('SELECT ?relation, ?object WHERE { ' + '<' + DBPEDIA_PREFIX + base_entity + '> ?relation ?object . }')
     results = []
-    for row in sparql.query(SPARQL_ENDPOINT, query):
-        results.append(sparql.unpack_row(row))
+    try:
+        query = ('SELECT ?relation, ?object WHERE { ' + '<' + DBPEDIA_PREFIX + base_entity + '> ?relation ?object . }')
+
+        for row in sparql.query(SPARQL_ENDPOINT, query):
+            results.append(sparql.unpack_row(row))
+    except Exception as e:
+        print 'Error while getting relations for entity', base_entity
+        print e
 
     return results

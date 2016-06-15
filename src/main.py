@@ -22,7 +22,7 @@ def main():
     # examples.word2vec_example()
     # examples.sparql_example()
 
-    model_path = '../data/WikiEntityModel_400_neg10_iter5.seq'
+    model_path = '../data/dbpedia_Cats_model_sg_400.bin' #'../data/WikiEntityModel_400_neg10_iter5.seq'
     #'../data/dbpedia_noCats_model_sg_400.bin'  # '../data/dbpedia_Cats_model_sg_400.bin'
     n_entities = 100
     out_path = '../data/word2sem_.csv'
