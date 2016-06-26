@@ -1,4 +1,4 @@
-import sparql
+import sparql, dbpedia
 from gensim.models.word2vec import LineSentence, Word2Vec
 from os.path import join, dirname
 
@@ -28,3 +28,16 @@ def sparql_example():
         print 'row:', row
         values = sparql.unpack_row(row)
         print values[0], "-", values[1], "orbits"
+
+def dbpedia_example():
+    base_entity = 'France'
+    relations_from = dbpedia.get_relations_from_base_entity(base_entity)
+    relations_to = dbpedia.get_relations_to_base_entity(base_entity)
+
+    print 'Relations from', base_entity, len(relations_from)
+    # for r in relations_from:
+    #     print r
+
+    print 'Relations to', base_entity, len(relations_to)
+    # for r in relations_to:
+    #     print r
