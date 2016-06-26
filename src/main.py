@@ -68,8 +68,10 @@ def extract_relations(n_entities, min_relation_count, model_path, out_path, shuf
                 # print relation, 'count', count , ' / avg cos_sim', avg_cos, ' / std cos_sim', std_cos
                 relations_statistics.append((relation, count, avg_cos, std_cos))
 
-            if generate_relation_vectors:
-                mean_relation_vectors[relation] = np.mean(vectors, axis=0)
+                if generate_relation_vectors:
+                    # save mean vector and similarity threshold to file
+                    # similarity threshold = avg. similarity - std. similarity
+                    mean_relation_vectors[relation] = (np.mean(vectors, axis=0), avg_cos, std_cos)
 
     relations_statistics.sort(key=lambda x: x[2], reverse=True)
     write_csv(relations_statistics, out_path)
@@ -88,8 +90,8 @@ def main():
     model_path = '../data/dbpedia_Cats_model_sg_400.bin'
     # model_path = '../data/dbpedia_noCats_model_sg_400.bin'
     # model_path = '../data/WikiEntityModel_400_neg10_iter5.seq'
-    out_path = '../data/word2sem_.csv'
-    n_entities = 10
+    out_path = '../data/word2sem_500.csv'
+    n_entities = 500
     min_relation_count = 3
     shuffle = True
     generate_relation_vectors = True
