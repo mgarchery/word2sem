@@ -120,7 +120,7 @@ def evaluate(model_path, n_entities, vectors_dump, shuffle, topn):
             related_entity = unicode(related_entity).encode('utf8')
             related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
             if related_entity_without_prefix in model:
-                print 'found dbpedia relation', relation, related_entity_without_prefix
+                #print 'found dbpedia relation', relation, related_entity_without_prefix
                 base_entity_dbpedia_relations.add((relation, related_entity_without_prefix))
 
         # extract relations according to word2vec similarity
@@ -151,7 +151,7 @@ def evaluate(model_path, n_entities, vectors_dump, shuffle, topn):
         fn = len(base_entity_dbpedia_relations - base_entity_word2vec_relations)
 
         print base_entity, 'tp=', tp, 'fp=', fp, 'fn=', fn
-        print 'true positives:', base_entity_dbpedia_relations & base_entity_word2vec_relations
+        #print 'true positives:', base_entity_dbpedia_relations & base_entity_word2vec_relations
         #recall = float(tp) / (tp + fp)
         #precision = float(tp) / (tp + fn)
 
@@ -161,10 +161,10 @@ def evaluate(model_path, n_entities, vectors_dump, shuffle, topn):
         fp_total += fp
         fn_total += fn
 
-    #recall_total = float(tp_total) / (tp_total + fp_total)
-    #precision_total = float(tp_total) / (tp_total + fn_total)
+    recall_total = float(tp_total) / (tp_total + fp_total)
+    precision_total = float(tp_total) / (tp_total + fn_total)
 
-    #print 'total:', 'precision = ', precision_total, 'recall = ', recall_total
+    print 'total:', 'precision = ', precision_total, 'recall = ', recall_total
 
 
 def main():
@@ -184,7 +184,7 @@ def main():
 
     #extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors)
 
-    evaluate(model_path, 5, '/home/garchery/word2sem/data/dbpedia_Cats_model_sg_400_10000_min3.csv.vectors.pkl', True, 5)
+    evaluate(model_path, 50, '/home/garchery/word2sem/data/dbpedia_Cats_model_sg_400_10000_min3.csv.vectors.pkl', True, 5)
 
     print '{0:.1f}'.format(time.time() - start_time), 'seconds'
 
