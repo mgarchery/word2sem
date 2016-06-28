@@ -74,10 +74,13 @@ def extract_relations(model_path, n_entities, min_relation_count, out_path, shuf
                     if dump_vectors:
                         mean_relation_vectors[relation] = (np.mean(vectors, axis=0), count, avg_cos, std_cos)
 
+    print 'Sorting relations'
     relations_statistics.sort(key=lambda x: x[2], reverse=True)
+    print 'Writing to csv'
     write_csv(relations_statistics, out_path)
 
     if dump_vectors:
+        print 'Writing vectors dump'
         f = open(out_path + '.vectors.pkl', 'wb')
         cPickle.dump(mean_relation_vectors, f)
 
