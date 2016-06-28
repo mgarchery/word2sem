@@ -115,7 +115,7 @@ def evaluate(model_path, n_entities, vectors_dump, shuffle, topn):
 
 
         # extract relations according to dbpedia (ground truth)
-        print 'extracting dbpedia relations'
+        #print 'extracting dbpedia relations'
         for (relation, related_entity) in get_relations_from_base_entity(base_entity):
             related_entity = unicode(related_entity).encode('utf8')
             related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
@@ -124,7 +124,7 @@ def evaluate(model_path, n_entities, vectors_dump, shuffle, topn):
                 base_entity_dbpedia_relations.add((relation, related_entity_without_prefix))
 
         # extract relations according to word2vec similarity
-        print 'extracting word2vec relations'
+        #print 'extracting word2vec relations'
 
         for dbpedia_relation in base_entity_dbpedia_relations:
 
@@ -142,7 +142,7 @@ def evaluate(model_path, n_entities, vectors_dump, shuffle, topn):
 
                 for candidate in candidate_related_entities:
                     (related_entity, sim) = candidate
-                    if related_entity != base_entity and sim > 0.9 :
+                    if related_entity != base_entity and sim > avg_cos - std_cos :
                         #print 'found w2v relation', relation_key, related_entity
                         base_entity_word2vec_relations.add((dbpedia_relation[0], related_entity))
 
@@ -176,15 +176,15 @@ def main():
     model_path = '/home/garchery/Embeddings/dbpedia_Cats_model_sg_400.bin'
     # model_path = '../data/dbpedia_noCats_model_sg_400.bin'
     # model_path = '../data/WikiEntityModel_400_neg10_iter5.seq'
-    out_path = '/home/garchery/word2sem/data/dbpedia_Cats_model_sg_400_10000_min3.csv'
-    n_entities = 10000
+    out_path = '/home/garchery/word2sem/data/dbpedia_Cats_model_sg_400_100000_min3.csv'
+    n_entities = 100000
     min_relation_count = 3
     shuffle = True
     dump_vectors = True
 
-    #extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors)
+    extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors)
 
-    evaluate(model_path, 50, '/home/garchery/word2sem/data/dbpedia_Cats_model_sg_400_10000_min3.csv.vectors.pkl', True, 5)
+    #evaluate(model_path, 500, '/home/garchery/word2sem/data/dbpedia_Cats_model_sg_400_10000_min3.csv.vectors.pkl', True, 5)
 
     print '{0:.1f}'.format(time.time() - start_time), 'seconds'
 
