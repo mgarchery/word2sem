@@ -58,7 +58,9 @@ def extract_relations(model_path, n_entities, min_relation_count, out_path, shuf
     relations_statistics = []
     mean_relation_vectors = dict()
 
-    for relation in relation_vectors:
+    n_relations = len(relation_vectors)
+    for r, relation in enumerate(relation_vectors):
+        print r, '/', n_relations, relation
         vectors = relation_vectors[relation]
 
         if len(vectors) > min_relation_count:
