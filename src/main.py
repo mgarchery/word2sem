@@ -146,20 +146,20 @@ def evaluate(model_path, n_entities, vectors_dump, shuffle, topn):
                         #print 'found w2v relation', relation_key, related_entity
                         base_entity_word2vec_relations.add((dbpedia_relation[0], related_entity))
 
-            tp = len(base_entity_dbpedia_relations & base_entity_word2vec_relations)
-            fp = len(base_entity_word2vec_relations - base_entity_dbpedia_relations)
-            fn = len(base_entity_dbpedia_relations - base_entity_word2vec_relations)
+        tp = len(base_entity_dbpedia_relations & base_entity_word2vec_relations)
+        fp = len(base_entity_word2vec_relations - base_entity_dbpedia_relations)
+        fn = len(base_entity_dbpedia_relations - base_entity_word2vec_relations)
 
-            print base_entity, 'tp=', tp, 'fp=', fp, 'fn=', fn
-            print 'true positives:', base_entity_dbpedia_relations & base_entity_word2vec_relations
-            #recall = float(tp) / (tp + fp)
-            #precision = float(tp) / (tp + fn)
+        print base_entity, 'tp=', tp, 'fp=', fp, 'fn=', fn
+        print 'true positives:', base_entity_dbpedia_relations & base_entity_word2vec_relations
+        #recall = float(tp) / (tp + fp)
+        #precision = float(tp) / (tp + fn)
 
-            #print base_entity, 'precision = ', precision, 'recall = ', recall
+        #print base_entity, 'precision = ', precision, 'recall = ', recall
 
-            tp_total += tp
-            fp_total += fp
-            fn_total += fn
+        tp_total += tp
+        fp_total += fp
+        fn_total += fn
 
     #recall_total = float(tp_total) / (tp_total + fp_total)
     #precision_total = float(tp_total) / (tp_total + fn_total)
