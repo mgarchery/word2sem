@@ -3,6 +3,8 @@
 
 import csv
 import cPickle
+from threading import Thread
+
 import examples
 import random
 import time
@@ -11,6 +13,9 @@ from os import path
 from scipy import spatial
 from gensim.models import Word2Vec
 from dbpedia import get_relations_from_base_entity, DBPEDIA_PREFIX
+from math import isnan
+from multiprocessing.pool import ThreadPool
+
 
 
 def write_csv(relations_statistics, csv_path):
@@ -22,7 +27,7 @@ def write_csv(relations_statistics, csv_path):
             writer.writerow((relation, count, avg_cos, std_cos))
 
 
-def extract_relations(n_entities, min_relation_count, model_path, out_path, shuffle, generate_relation_vectors):
+def extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors):
     print 'Loading model...'
     model = Word2Vec.load_word2vec_format(model_path, binary=True)
     print 'Finished loading model'
@@ -62,21 +67,17 @@ def extract_relations(n_entities, min_relation_count, model_path, out_path, shuf
                 for j, vj in enumerate(vectors[i + 1:]):
                     cosine_distances.append(1.0 - spatial.distance.cosine(vi, vj))
             if len(cosine_distances) > 1:
-                # print cosine_distances
                 avg_cos, std_cos = np.mean(cosine_distances), np.std(cosine_distances)
-                count = len(vectors)
-                # print relation, 'count', count , ' / avg cos_sim', avg_cos, ' / std cos_sim', std_cos
-                relations_statistics.append((relation, count, avg_cos, std_cos))
-
-                if generate_relation_vectors:
-                    # save mean vector and similarity threshold to file
-                    # similarity threshold = avg. similarity - std. similarity
-                    mean_relation_vectors[relation] = (np.mean(vectors, axis=0), avg_cos, std_cos)
+                if not isnan(avg_cos) and not isnan(std_cos):
+                    count = len(vectors)
+                    relations_statistics.append((relation, count, avg_cos, std_cos))
+                    if dump_vectors:
+                        mean_relation_vectors[relation] = (np.mean(vectors, axis=0), count, avg_cos, std_cos)
 
     relations_statistics.sort(key=lambda x: x[2], reverse=True)
     write_csv(relations_statistics, out_path)
 
-    if generate_relation_vectors:
+    if dump_vectors:
         f = open(out_path + '.vectors.pkl', 'wb')
         cPickle.dump(mean_relation_vectors, f)
 
@@ -94,9 +95,9 @@ def main():
     n_entities = 500
     min_relation_count = 3
     shuffle = True
-    generate_relation_vectors = True
+    dump_vectors = True
 
-    extract_relations(n_entities, min_relation_count, model_path, out_path, shuffle, generate_relation_vectors)
+    extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors)
 
     print '{0:.1f}'.format(time.time() - start_time), 'seconds'
 
