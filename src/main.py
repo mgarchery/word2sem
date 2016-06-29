@@ -45,6 +45,7 @@ def extract_relations(model_path, n_entities, min_relation_count, out_path, shuf
         print i, base_entity
         for (relation, related_entity) in get_relations_from_base_entity(base_entity):
             related_entity = unicode(related_entity).encode('utf8')
+            relation = unicode(relation).encode('utf8')
             if related_entity.startswith(DBPEDIA_PREFIX):
                 related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
                 if related_entity_without_prefix in model:
