@@ -89,7 +89,7 @@ def extract_relations(model_path, n_entities, min_relation_count, out_path, shuf
         cPickle.dump(mean_relation_vectors, f)
 
 
-def evaluate(model_path, n_entities, n_relations, vectors_dump, shuffle, topn):
+def evaluate_using_dbpedia_relation_types(model_path, n_entities, vectors_dump, shuffle, topn):
 
     print 'Loading relation vectors dump'
     f = open(vectors_dump, 'rb')
@@ -100,12 +100,6 @@ def evaluate(model_path, n_entities, n_relations, vectors_dump, shuffle, topn):
     print 'Loading model...'
     model = Word2Vec.load_word2vec_format(model_path, binary=True)
     print 'Finished loading model'
-
-    #relation_types = set(sorted(w2v_relations.keys(), key=lambda x: w2v_relations[x][2], reverse=True)[:n_relations])  # use n_relations best relations 
-    #print 'Looking for relation types:'
-    #for rt in relation_types:
-        #print rt, '(avg cos sim =', w2v_relations[rt][2], ')'
-
 
     if n_entities > 0:
         if shuffle:
@@ -180,6 +174,111 @@ def evaluate(model_path, n_entities, n_relations, vectors_dump, shuffle, topn):
     print 'recall =', round(recall_total, 3)
     print 'F1 =', round(f1_total,3)
 
+def evaluate_using_most_specific_relation_types(model_path, n_entities, n_relations, vectors_dump, shuffle, topn):
+
+    print 'Loading relation vectors dump'
+    f = open(vectors_dump, 'rb')
+    w2v_relations = cPickle.load(f)
+    print 'Found', len(w2v_relations), 'relations in vectors dump'
+    # dict { relation : (vector, count, avg_cos, std_cos) }
+
+    print 'Loading model...'
+    model = Word2Vec.load_word2vec_format(model_path, binary=True)
+    print 'Finished loading model'
+
+    relation_types = set(sorted(w2v_relations.keys(), key=lambda x: w2v_relations[x][2], reverse=True)[:n_relations])  # use n_relations best relations
+    print 'Looking for relation types:'
+    for rt in relation_types:
+        print rt, '(avg cos sim =', w2v_relations[rt][2], ')'
+
+    if n_entities > 0:
+        if shuffle:
+            base_entities = random.sample(model.vocab.keys(), n_entities)
+        else:
+            base_entities = model.vocab.keys()[:n_entities]
+    else:
+        base_entities = model.vocab.keys()
+
+    tp_total, fp_total, fn_total = 0, 0, 0
+
+    for i, base_entity in enumerate(base_entities):
+        print i, base_entity
+
+        base_entity_dbpedia_relations = set()
+        base_entity_word2vec_relations = set()
+        base_entity_word2vec_relation_candidates = dict()
+
+        relation_types = set()
+
+        # extract relations according to dbpedia (ground truth)
+        # print 'extracting dbpedia relations'
+        for (relation, related_entity) in get_relations_from_base_entity(base_entity):
+            related_entity = unicode(related_entity).encode('utf8')
+            related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
+            if related_entity_without_prefix in model and relation in relation_types:
+                # print 'found dbpedia relation', relation, related_entity_without_prefix
+                base_entity_dbpedia_relations.add((relation, related_entity_without_prefix))
+                relation_types.add(relation)
+        # extract relations according to word2vec similarity
+        # print 'extracting word2vec relations'
+
+        for relation_type in relation_types:
+            if relation_type in w2v_relations:
+                (vector, count, avg_cos, std_cos) = w2v_relations[relation_type]
+                # print 'vector', vector
+                # print 'base_entity', model[base_entity]
+                # print 'base_entity+vector', model[base_entity]+vector
+                # relation_applied_to_base_entity = model[base_entity]+vector
+                candidate_related_entities = model.most_similar(positive=[model[base_entity], vector], negative=[],
+                                                                topn=topn)
+                # print 'vector', vector
+                # print 'base_entity', model[base_entity]
+                # print 'base_entity+vector', relation_applied_to_base_entity
+                # print 'candidate related_entities', candidate_related_entities
+
+                for (related_entity, sim) in candidate_related_entities:
+                    if related_entity != base_entity and sim > avg_cos - std_cos:
+                        # print 'found w2v relation', relation_key, related_entity
+                        #base_entity_word2vec_relations.add((relation_type, related_entity))
+
+                        # Collect only the best fitting relation to each target entity
+                        if related_entity in base_entity_word2vec_relation_candidates:
+                            (rt, r_sim) = base_entity_word2vec_relation_candidates[related_entity]
+                            if sim > r_sim:
+                                base_entity_word2vec_relation_candidates[related_entity] = (relation_type, sim)
+                        else:
+                            base_entity_word2vec_relation_candidates[related_entity] = (relation_type, sim)
+
+        for rel_entity in base_entity_word2vec_relation_candidates:
+            base_entity_word2vec_relations.add(base_entity_word2vec_relation_candidates[rel_entity][0], rel_entity)
+
+        tp = len(base_entity_dbpedia_relations & base_entity_word2vec_relations)
+        fp = len(base_entity_word2vec_relations - base_entity_dbpedia_relations)
+        fn = len(base_entity_dbpedia_relations - base_entity_word2vec_relations)
+
+        print base_entity, 'tp=', tp, 'fp=', fp, 'fn=', fn
+        print 'true positives:', base_entity_dbpedia_relations & base_entity_word2vec_relations
+        print 'false positives:', base_entity_word2vec_relations - base_entity_dbpedia_relations
+        print 'false negatives:', base_entity_dbpedia_relations - base_entity_word2vec_relations
+
+        # recall = float(tp) / (tp + fn)
+        # precision = float(tp) / (tp + fp)
+
+        # print base_entity, 'precision = ', precision, 'recall = ', recall
+
+        tp_total += tp
+        fp_total += fp
+        fn_total += fn
+
+    precision_total = float(tp_total) / (tp_total + fp_total)
+    recall_total = float(tp_total) / (tp_total + fn_total)
+    f1_total = 2 * precision_total * recall_total / (precision_total + recall_total)
+
+    print 'Overall evaluation:'
+    print 'precision =', round(precision_total, 3)
+    print 'recall =', round(recall_total, 3)
+    print 'F1 =', round(f1_total, 3)
+
 
 def main():
     start_time = time.time()
@@ -198,11 +297,13 @@ def main():
 
     #extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors)
 
-    n_entities = 1000
-    n_relations = 20 # -1 for all possible relation types
+    n_entities = 10
+    n_relations = 100 # -1 for all possible relation types
     word2vec_similar_topn = 10
     relation_vectors_dump = '/home/garchery/word2sem/data/wiki_50000_min3.csv.vectors.pkl'
-    evaluate(model_path, n_entities, n_relations, relation_vectors_dump, True, word2vec_similar_topn)
+
+    #evaluate_using_dbpedia_relation_types(model_path, n_entities, relation_vectors_dump, True, word2vec_similar_topn)
+    evaluate_using_most_specific_relation_types(model_path, n_entities, n_relations, relation_vectors_dump, True, word2vec_similar_topn)
 
     print '{0:.1f}'.format(time.time() - start_time), 'seconds'
 
