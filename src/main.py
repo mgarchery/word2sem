@@ -208,17 +208,19 @@ def evaluate_using_most_specific_relation_types(model_path, n_entities, n_relati
         base_entity_word2vec_relations = set()
         base_entity_word2vec_relation_candidates = dict()
 
-        relation_types = set()
-
         # extract relations according to dbpedia (ground truth)
         # print 'extracting dbpedia relations'
         for (relation, related_entity) in get_relations_from_base_entity(base_entity):
             related_entity = unicode(related_entity).encode('utf8')
             related_entity_without_prefix = related_entity[len(DBPEDIA_PREFIX):]
-            if related_entity_without_prefix in model and relation in relation_types:
-                # print 'found dbpedia relation', relation, related_entity_without_prefix
-                base_entity_dbpedia_relations.add((relation, related_entity_without_prefix))
-                relation_types.add(relation)
+            if related_entity_without_prefix in model:
+                print 'found dbpedia relation', relation, related_entity_without_prefix
+                if relation in relation_types:
+                    print 'relation is in relation types'
+                    base_entity_dbpedia_relations.add((relation, related_entity_without_prefix))
+                else:
+                    print 'relation is not in relation types'
+
         # extract relations according to word2vec similarity
         # print 'extracting word2vec relations'
 
@@ -237,7 +239,7 @@ def evaluate_using_most_specific_relation_types(model_path, n_entities, n_relati
                 # print 'candidate related_entities', candidate_related_entities
 
                 for (related_entity, sim) in candidate_related_entities:
-                    if related_entity != base_entity and sim > avg_cos - std_cos:
+                    if related_entity != base_entity and sim > avg_cos:
                         # print 'found w2v relation', relation_key, related_entity
                         #base_entity_word2vec_relations.add((relation_type, related_entity))
 
@@ -250,7 +252,7 @@ def evaluate_using_most_specific_relation_types(model_path, n_entities, n_relati
                             base_entity_word2vec_relation_candidates[related_entity] = (relation_type, sim)
 
         for rel_entity in base_entity_word2vec_relation_candidates:
-            base_entity_word2vec_relations.add(base_entity_word2vec_relation_candidates[rel_entity][0], rel_entity)
+            base_entity_word2vec_relations.add((base_entity_word2vec_relation_candidates[rel_entity][0], rel_entity))
 
         tp = len(base_entity_dbpedia_relations & base_entity_word2vec_relations)
         fp = len(base_entity_word2vec_relations - base_entity_dbpedia_relations)
@@ -298,9 +300,9 @@ def main():
     #extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors)
 
     n_entities = 10
-    n_relations = 100 # -1 for all possible relation types
-    word2vec_similar_topn = 10
-    relation_vectors_dump = '/home/garchery/word2sem/data/wiki_50000_min3.csv.vectors.pkl'
+    n_relations = -1 # -1 for all possible relation types
+    word2vec_similar_topn = 2
+    relation_vectors_dump = '/home/garchery/word2sem/data/dbpedia_cats_50000_min3.csv.vectors.pkl'
 
     #evaluate_using_dbpedia_relation_types(model_path, n_entities, relation_vectors_dump, True, word2vec_similar_topn)
     evaluate_using_most_specific_relation_types(model_path, n_entities, n_relations, relation_vectors_dump, True, word2vec_similar_topn)
