@@ -198,10 +198,10 @@ def main():
 
     #extract_relations(model_path, n_entities, min_relation_count, out_path, shuffle, dump_vectors)
 
-    n_entities = 500
+    n_entities = 1000
     n_relations = 20 # -1 for all possible relation types
-    word2vec_similar_topn = 2
-    relation_vectors_dump = '/home/garchery/word2sem/data/dbpedia_cats_50000_min3.csv.vectors.pkl'
+    word2vec_similar_topn = 10
+    relation_vectors_dump = '/home/garchery/word2sem/data/wiki_50000_min3.csv.vectors.pkl'
     evaluate(model_path, n_entities, n_relations, relation_vectors_dump, True, word2vec_similar_topn)
 
     print '{0:.1f}'.format(time.time() - start_time), 'seconds'
